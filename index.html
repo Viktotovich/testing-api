@@ -4,21 +4,151 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      form {
+        display: flex;
+        justify-content: center;
+      }
+
+      input {
+        box-shadow: 1px 1px 1px blue;
+        border-radius: 5px;
+      }
+
+      .wrong-search {
+        border: 1px solid red;
+      }
+
+      .input-container {
+        display: flex;
+      }
+
+      label {
+        padding: 0 1rem;
+      }
+
+      button {
+        appearance: none;
+        border-radius: 5px;
+        margin: 0 0 0 1rem;
+        padding: 0rem 1rem;
+        border: 1px solid black;
+        background-color: rgb(49, 116, 208);
+        color: white;
+      }
+
+      button:hover {
+        cursor: pointer;
+        background-color: blue;
+      }
+
+      button:active {
+        transform: scale(1.1);
+      }
+
+      #status-displayer {
+        padding: 2rem 0;
+        max-width: 40%;
+        text-align: center;
+      }
+    </style>
   </head>
   <body>
-    <img src="#" alt="" />
+    <h1
+      style="text-align: center; font-size: 1.5rem; text-decoration: underline"
+    >
+      Search for anything
+    </h1>
+    <form>
+      <div class="input-container">
+        <label for="search-gif">Search for a gif:</label>
+        <input
+          type="text"
+          id="search-gif"
+          placeholder="cats-dancing"
+          name="search-gif"
+          maxlength="35"
+        />
+      </div>
+      <button type="submit" id="search-button">Search</button>
+    </form>
+    <span id="status-displayer"></span>
+    <div class="gif-container"><img src="#" alt="" /></div>
+
     <script>
-      const img = document.querySelector("img");
-      fetch(
-        "https://api.giphy.com/v1/gifs/translate?api_key=wFnbBXNbmMVcQIlGeZ7EUpHQXbTZd9EE&s=dog",
-        { mode: "cors" }
-      )
-        .then(function (response) {
-          return response.json();
-        })
-        .then(function (response) {
-          img.src = response.data.images.original.url;
-        });
+      const searchControls = {
+        initiateListeners: function () {
+          const searchButton = document.querySelector("#search-button");
+
+          searchButton.addEventListener("click", searchControls.getSearchValue);
+        },
+        getSearchValue: function (e) {
+          const searchItem = document.querySelector("#search-gif");
+
+          if (
+            searchItem.value === "" ||
+            searchItem.value === null ||
+            searchItem.value === undefined
+          ) {
+            e.preventDefault();
+            searchItem.setAttribute("class", "wrong-search");
+          } else {
+            e.preventDefault();
+            searchItem.setAttribute("class", "normal");
+            searchControls.displayLoading(searchItem.value);
+            searchControls.requestImage(searchItem.value);
+          }
+        },
+        requestImage: function (str) {
+          const img = document.querySelector("img");
+          const request = `https://api.giphy.com/v1/gifs/translate?api_key=wFnbBXNbmMVcQIlGeZ7EUpHQXbTZd9EE&s=${str}`;
+
+          fetch(request, { mode: "cors" })
+            .then(function (response) {
+              if (response.length === 0) {
+                searchControls.cantFindDisplay(str);
+              } else {
+                return response.json();
+              }
+            })
+            .then(function (response) {
+              img.src = response.data.images.original.url;
+              searchControls.clearLoadingDisplay();
+            })
+            .catch(function (err) {
+              searchControls.displayError(err, str);
+              console.error(err);
+            });
+        },
+        cantFindDisplay: function (str) {
+          const statusDisplayer = document.querySelector("#status-displayer");
+
+          statusDisplayer.textContent = `Unfortunately, we couldn't find any gifs matching your search query: ${str}. Try again.`;
+        },
+        displayLoading: function (str) {
+          const statusDisplayer = document.querySelector("#status-displayer");
+
+          statusDisplayer.textContent = `Loading a gif matching: ${str}.`;
+        },
+        clearLoadingDisplay: function () {
+          const statusDisplayer = document.querySelector("#status-displayer");
+
+          statusDisplayer.textContent = "";
+        },
+        displayError: function (err, str) {
+          const statusDisplayer = document.querySelector("#status-displayer");
+
+          statusDisplayer.textContent = `Unfortunately, while searching for: ${str}, we encountered an error from the server. The server says: ${err}. Please give it some time and try again`;
+        },
+      };
+
+      searchControls.initiateListeners();
     </script>
   </body>
 </html>
