@@ -118,6 +118,7 @@
             } else {
               const gifData = await response.json();
               img.src = gifData.data.images.original.url;
+              searchControls.clearLoadingDisplay();
             }
           } catch (err) {
             searchControls.displayError(err, str);
