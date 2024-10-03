@@ -83,6 +83,7 @@
 
     <script>
       const searchControls = {
+        img: document.querySelector("img"),
         initiateListeners: function () {
           const searchButton = document.querySelector("#search-button");
 
@@ -102,29 +103,26 @@
             e.preventDefault();
             searchItem.setAttribute("class", "normal");
             searchControls.displayLoading(searchItem.value);
-            searchControls.requestImage(searchItem.value);
+            searchControls.requestImageAsync(searchItem.value);
           }
         },
-        requestImage: function (str) {
-          const img = document.querySelector("img");
+        requestImageAsync: async function (str) {
+          const img = searchControls.img;
           const request = `https://api.giphy.com/v1/gifs/translate?api_key=wFnbBXNbmMVcQIlGeZ7EUpHQXbTZd9EE&s=${str}`;
 
-          fetch(request, { mode: "cors" })
-            .then(function (response) {
-              if (response.length === 0) {
-                searchControls.cantFindDisplay(str);
-              } else {
-                return response.json();
-              }
-            })
-            .then(function (response) {
-              img.src = response.data.images.original.url;
-              searchControls.clearLoadingDisplay();
-            })
-            .catch(function (err) {
-              searchControls.displayError(err, str);
-              console.error(err);
-            });
+          try {
+            const response = await fetch(request, { mode: "cors" });
+
+            if (response.length === 0 || response === undefined) {
+              searchControls.cantFindDisplay(str);
+            } else {
+              const gifData = await response.json();
+              img.src = gifData.data.images.original.url;
+            }
+          } catch (err) {
+            searchControls.displayError(err, str);
+            console.error(`${err.name}. ${err} at ${err.stack}`);
+          }
         },
         cantFindDisplay: function (str) {
           const statusDisplayer = document.querySelector("#status-displayer");
